@@ -1,0 +1,16 @@
+---
+  weather_update_interval: 1s
+  gnd_stn_port: /dev/ttyACM0
+  avionics_port: /dev/ttyUSB0
+  baudrate: 9600 
+  port: 8000
+
+  control_codes:
+    software_arm: softa
+    launch_systems_arm: launcha
+    vp_rockets_arm: vpa
+    software_launch: softl
+    launch_systems_launch: launchl
+    vp_rockets_launch: vpl
+    abort: abort
+    fill_control: fillcontrol
