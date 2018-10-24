@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"syscall"
-	"time"
 
 	"gopkg.in/yaml.v2"
 )
@@ -17,6 +16,8 @@ import (
 type Config struct {
 	Port int `yaml:"port"`
 }
+
+var hub Hub
 
 func loadConfig() (Config, error) {
 	configFilename := "config.yml"
@@ -51,20 +52,6 @@ func setUpExitSignals() {
 	}()
 }
 
-func sendAmmo(hub *Hub, interval time.Duration) {
-	tick := time.NewTicker(interval)
-	for {
-		<-tick.C // Block until next cycle
-
-		log.Println("Sending Ammo")
-		err := hub.sendMsg("Ammo")
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-	}
-}
-
 func main() {
 	// Setup configuration
 	config, err := loadConfig()
@@ -74,7 +61,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	hub := newHub()
+	hub = newHub()
 
 	go hub.run()
 
@@ -86,13 +73,10 @@ func main() {
 		serveWs(&hub, w, r)
 	})
 
-	go sendAmmo(&hub, time.Second)
-
 	log.Println("Listening on port:", config.Port)
 	err = http.ListenAndServe(":"+strconv.Itoa(config.Port), nil)
 	if err != nil {
 		log.Println(err)
 		os.Exit(1)
 	}
-
 }

@@ -65,7 +65,21 @@ func (c *Client) readPump() {
 			log.Println("err:", err)
 			break
 		}
-		log.Println(msg)
+		if msg["Action"] == "Give Ammo" {
+			log.Println("Sending Ammo")
+			err := hub.sendMsg("Give Ammo")
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+		} else if msg["Action"] == "Destroy Ammo" {
+			log.Println("Destroyed Ammo :(")
+			err := hub.sendMsg("Remove Ammo")
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+		}
 	}
 }
 
