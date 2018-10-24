@@ -15,27 +15,7 @@ import (
 )
 
 type Config struct {
-	WeatherUpdateInterval string       `yaml:"weather_update_interval"`
-	GndStnPort          string       `yaml:"gnd_stn_port"`
-	AvionicsPort          string       `yaml:"avionics_port"`
-	Baudrate      int          `yaml:"baudrate"`
-	Port                  int          `yaml:"port"`
-	Codes                 ControlCodes `yaml:"control_codes"`
-}
-
-func init() {
-	launchStatus = LaunchStatus{
-		Type:                       "launchControlInfo",
-		SoftwareArmCounter:         0,
-		LaunchSystemsArmCounter:    0,
-		VPRocketsArmCounter:        0,
-		ArmCounter:                 0,
-		SoftwareLaunchCounter:      0,
-		LaunchSystemsLaunchCounter: 0,
-		VPRocketsLaunchCounter:     0,
-		LaunchCounter:              0,
-		Countdown:                  10,
-	}
+	Port int `yaml:"port"`
 }
 
 func loadConfig() (Config, error) {
@@ -66,9 +46,23 @@ func setUpExitSignals() {
 	go func() {
 		signal := <-c
 		log.Println("Got interrupt signal:", signal)
-		log.Println("Shutting down Hamilton Launch Server...")
+		log.Println("Shutting down Reload Rumble server...")
 		os.Exit(0)
 	}()
+}
+
+func sendAmmo(hub *Hub, interval time.Duration) {
+	tick := time.NewTicker(interval)
+	for {
+		<-tick.C // Block until next cycle
+
+		log.Println("Sending Ammo")
+		err := hub.sendMsg("Ammo")
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+	}
 }
 
 func main() {
@@ -80,28 +74,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	weatherUpdateInterval, err := time.ParseDuration(config.WeatherUpdateInterval)
-	if err != nil {
-		log.Println("Failed to parse update interval")
-		log.Println(err)
-		os.Exit(1)
-	}
-
-	err = setControlCodes(config.Codes)
-	if err != nil {
-		log.Println("Control code error:", config.Codes)
-		log.Println(err)
-		os.Exit(1)
-	}
-
 	hub := newHub()
-	setupSerialConnections(config.GndStnPort, config.AvionicsPort, config.Baudrate)
 
-	// Send updates
-	// go sendWeather(&hub, weatherUpdateInterval)
-	go handleIncomingSerial(&hub)
-	go sendFillingInfo(&hub, weatherUpdateInterval)  // use weather interval for now
-	go sendLaunchStatus(&hub, weatherUpdateInterval) // use weather interval for now
 	go hub.run()
 
 	// Capture (keyboard) interrupt signals for exit
@@ -111,6 +85,8 @@ func main() {
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		serveWs(&hub, w, r)
 	})
+
+	go sendAmmo(&hub, time.Second)
 
 	log.Println("Listening on port:", config.Port)
 	err = http.ListenAndServe(":"+strconv.Itoa(config.Port), nil)
