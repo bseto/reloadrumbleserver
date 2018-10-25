@@ -79,6 +79,13 @@ func (c *Client) readPump() {
 				log.Println(err)
 				continue
 			}
+		} else if msg["Action"] == "Recover Health" {
+			log.Println("Recovered Health!")
+			err := hub.sendMsg("Recover Health")
+			if err != nil {
+				log.Println(err)
+				continue
+			}
 		}
 	}
 }
