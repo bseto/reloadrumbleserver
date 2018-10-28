@@ -67,21 +67,27 @@ func (c *Client) readPump() {
 		}
 		if msg["Action"] == "Give Ammo" {
 			log.Println("Sending Ammo")
-			err := hub.sendMsg("Give Ammo")
+			err := hub.sendMsg(map[string]string{
+				"type":   "MutateAmmo",
+				"amount": "1"})
 			if err != nil {
 				log.Println(err)
 				continue
 			}
 		} else if msg["Action"] == "Destroy Ammo" {
 			log.Println("Destroyed Ammo :(")
-			err := hub.sendMsg("Remove Ammo")
+			err := hub.sendMsg(map[string]string{
+				"type":   "MutateAmmo",
+				"amount": "-1"})
 			if err != nil {
 				log.Println(err)
 				continue
 			}
 		} else if msg["Action"] == "Recover Health" {
 			log.Println("Recovered Health!")
-			err := hub.sendMsg("Recover Health")
+			err := hub.sendMsg(map[string]string{
+				"type":   "MutateHealth",
+				"amount": "3"})
 			if err != nil {
 				log.Println(err)
 				continue
