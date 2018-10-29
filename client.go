@@ -59,39 +59,16 @@ func (c *Client) readPump() {
 		return nil
 	})
 	for {
-		var msg map[string]string
-		err := c.conn.ReadJSON(&msg)
+		_, msg, err := c.conn.ReadMessage()
 		if err != nil {
 			log.Println("err:", err)
 			break
 		}
-		if msg["Action"] == "Give Ammo" {
-			log.Println("Sending Ammo")
-			err := hub.sendMsg(map[string]string{
-				"type":   "MutateAmmo",
-				"amount": "1"})
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-		} else if msg["Action"] == "Destroy Ammo" {
-			log.Println("Destroyed Ammo :(")
-			err := hub.sendMsg(map[string]string{
-				"type":   "MutateAmmo",
-				"amount": "-1"})
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-		} else if msg["Action"] == "Recover Health" {
-			log.Println("Recovered Health!")
-			err := hub.sendMsg(map[string]string{
-				"type":   "MutateHealth",
-				"amount": "3"})
-			if err != nil {
-				log.Println(err)
-				continue
-			}
+		log.Println("Forwarding message: " + string(msg))
+		err = hub.sendRawMsg(msg)
+		if err != nil {
+			log.Println(err)
+			continue
 		}
 	}
 }

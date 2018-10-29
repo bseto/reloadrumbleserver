@@ -1,11 +1,11 @@
 package main
 
 import (
-	"time"
 	"encoding/json"
-	"os"
 	"fmt"
 	"log"
+	"os"
+	"time"
 )
 
 // Hub maintains the set of active clients and broadcasts messages to the
@@ -49,6 +49,21 @@ func (h *Hub) sendMsg(msg interface{}) error {
 		return err
 	}
 	h.broadcast <- msgBytes
+	return nil
+}
+
+func (h *Hub) sendRawMsg(msg []byte) error {
+	f, err := os.OpenFile("data.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Println(err)
+	} else {
+		defer f.Close()
+		if _, err = f.WriteString(fmt.Sprintf("[%v]: %v\n", time.Now().UTC(), string(msg))); err != nil {
+			log.Println(err)
+		}
+	}
+
+	h.broadcast <- msg
 	return nil
 }
 
