@@ -1,0 +1,10 @@
+---
+  image: gitlab/dind
+
+  before_script:
+    - ./dockerize.sh init
+
+  test_build:
+    script:
+      - ./dockerize.sh build
+
